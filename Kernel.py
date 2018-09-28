@@ -1,9 +1,13 @@
 from abc import abstractmethod, ABCMeta
 import tensorflow.keras as keras
 
+KERAS_VERBOES = False
+
 class BaseELM():
     """
-    This class defined ELM Model interface.
+        This class defined ELM Model interface.
+
+        !DO NOT MODIFY THIS CLASS!
     """
 
     def __init__(self):
@@ -21,20 +25,29 @@ class BaseELM():
         }
 
     @abstractmethod
-    def fit(self, x, y):
+    def fit(self, X, y):
         pass
 
     @abstractmethod
-    def fit_batch(self, x, y, batch_size=32):
+    def fit_batch(self, X, y, batch_size=32):
         pass
 
     @abstractmethod
-    def predict(self, x, y):
+    def predict(self, X, y):
         pass
+
 
 class ELMClassifier(BaseELM):
     """
         Standard ELM Classifier
+
+        This implementation of ELM is based on tensorflow 1.9.0 with keras
+
+        it will use SGD to solve the ELM problem with L2 normalization params.
+
+        reference of ELM algorithm can be found at here:
+
+            Extreme learning machine: theory and applications
     """
     def __build_model(self):
         self.__model = keras.models.Sequential()
@@ -48,8 +61,12 @@ class ELMClassifier(BaseELM):
         self.__model.add(keras.layers.Dense(units=1, activation='sigmoid', bias_initializer=self.__weight_initializer))
         return self.__model
 
-    def __init__(self, solver='SGD', layers=1, units=128, activation='relu', weight_initializer='normal'):
-        self.__solver = self.solver_dictionary[solver]
+    def __init__(self, solver='SGD', layers=1, units=128, activation='linear', weight_initializer='normal',
+                 lr=1e-2, epochs=2, batchsize=128, momentum=0):
+        BaseELM.__init__(self)
+        self.__fit_epochs = epochs
+        self.__fit_batchsize = batchsize
+        self.__solver = keras.optimizers.SGD(lr=lr, momentum=momentum)
         self.__layers = layers
         self.__hidden_units = units
         self.__model = None
@@ -61,21 +78,41 @@ class ELMClassifier(BaseELM):
         else:
             self.__weight_initializer = self.weight_initializer_dictionary[self.__weight_initializer]
 
-    def fit(self, x, y, normalization=1, batch_size=32, **solver_params):
+    def fit(self, X, y):
 
-        if set(y) != {0, 1} or set(y) != {-1, 1}:
-            raise Exception('ELM Binary Classifier can only fit binary classified data.\n '
-
+        if len(set(y)) is not 2:
+            raise Exception('ELM Binary Classifier can only fit binary classified data. '
                             'i.e. The label y should only contains 0, 1 or -1, 1')
 
         model = self.__build_model()
-        model.compile(optimizer=self.__solver(solver_params),
-                      loss=[keras.losses.binary_crossentropy, keras.losses.serialize],
-                      loss_weights=[1, normalization],
+        model.compile(optimizer=self.__solver,
+                      loss=keras.losses.binary_crossentropy,
                       metrics=[keras.metrics.binary_crossentropy])
-        model.fit(x, y, batch_size=batch_size)
+        model.fit(X, y, batch_size=self.__fit_batchsize, epochs=self.__fit_epochs, verbose=KERAS_VERBOES)
 
-    def predict(self, x, y=None):
-        return self.__model.predict(x)
+    def predict(self, X, y=None):
+        return self.__model.predict(X)
 
+
+class ELMRegressor(BaseELM):
+    """
+        Standard ELM Regressor for solving regression problem
+
+        This implementation is based on tensorflow 1.9.0 with keras
+
+        it will use SGD to solve this ELM problem with L2 normalization term.
+
+        reference can be found here:
+
+            Extreme learning machine: theory and applications
+    """
+
+    def fit(self, X, y):
+        pass
+
+    def fit_batch(self, X, y, batch_size=32):
+        pass
+
+    def predict(self, X, y):
+        pass
 
