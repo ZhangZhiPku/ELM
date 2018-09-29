@@ -7,6 +7,7 @@ import tensorflow.keras as keras
 
 KERAS_VERBOES = True
 
+
 class RBFLayer(Layer):
     """
         Implementation of RBF layer with keras
@@ -115,22 +116,23 @@ class ELMClassifier(BaseELM):
             _hidden_layer = keras.layers.Dense(units=self.__hidden_units, activation=self.__activation,
                                                bias_initializer=self.__weight_initializer)
             self.__model.add(_hidden_layer)
-            _hidden_layer.trainable = False
+            _hidden_layer.trainable = self.__hidden_layer_trainable
+
+        _regularizer = None
 
         if self.__normalization is not None:
             if self.__normalization is 'l1':
                 _regularizer = keras.regularizers.l1(self.__lambda)
             if self.__normalization is 'l2':
                 _regularizer = keras.regularizers.l2(self.__lambda)
-        else:
-            _regularizer = None
         self.__model.add(keras.layers.Dense(units=1, activation='sigmoid',
                                             bias_initializer=self.__weight_initializer,
                                             kernel_regularizer=_regularizer))
         return self.__model
 
-    def __init__(self, solver='SGD', layers=1, units=128, activation='linear', weight_initializer='normal',
-                 lr=1e-2, epochs=2, batchsize=128, momentum=0, normalization='l2', l=0.03):
+    def __init__(self, layers=1, units=128, activation='linear', weight_initializer='normal',
+                 lr=1e-2, epochs=2, batchsize=128, momentum=0, normalization='l2', l=0.03,
+                 trainable=False):
         BaseELM.__init__(self)
         self.__fit_epochs = epochs
         self.__fit_batchsize = batchsize
@@ -140,6 +142,7 @@ class ELMClassifier(BaseELM):
         self.__model = None
         self.__activation = activation
         self.__weight_initializer = weight_initializer
+        self.__hidden_layer_trainable = trainable
 
         if self.__weight_initializer not in self.weight_initializer_dictionary:
             raise Exception('unexcepted weight initializer name: %s' % self.__weight_initializer)
@@ -209,7 +212,7 @@ class RBFELMClassifier(BaseELM):
     def __build_model(self):
         self.__model = keras.models.Sequential()
         for layers_n in range(self.__layers):
-            self.__model.add(RBFLayer(units=self.__hidden_units, trainable=False))
+            self.__model.add(RBFLayer(units=self.__hidden_units, trainable=self.__hidden_layer_trainable))
 
         if self.__normalization is not None:
             if self.__normalization is 'l1':
@@ -224,7 +227,7 @@ class RBFELMClassifier(BaseELM):
         return self.__model
 
     def __init__(self, solver='SGD', layers=1, units=128, activation='linear', weight_initializer='normal',
-                 lr=1e-2, epochs=2, batchsize=128, momentum=0, normalization='l2', l=0.03):
+                 lr=1e-2, epochs=2, batchsize=128, momentum=0, normalization='l2', l=0.03, trainable=False):
         BaseELM.__init__(self)
         self.__fit_epochs = epochs
         self.__fit_batchsize = batchsize
@@ -234,6 +237,7 @@ class RBFELMClassifier(BaseELM):
         self.__model = None
         self.__activation = activation
         self.__weight_initializer = weight_initializer
+        self.__hidden_layer_trainable = trainable
 
         if self.__weight_initializer not in self.weight_initializer_dictionary:
             raise Exception('unexcepted weight initializer name: %s' % self.__weight_initializer)

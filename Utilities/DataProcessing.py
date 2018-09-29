@@ -11,4 +11,4 @@ def binarilize_classified(classified):
 
 
 def standard_scaling(dataframe):
-    return scale(dataframe, axis=1)
+    return scale(dataframe, axis=0)
