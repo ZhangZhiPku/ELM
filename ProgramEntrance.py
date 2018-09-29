@@ -1,4 +1,4 @@
-from Kernel import ELMClassifier
+from Kernel import ELMClassifier, RBFELMClassifier
 from DataLoader import mount_from_file
 from sklearn.model_selection import KFold
 from sklearn.metrics import f1_score
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     _data = mount_from_file('Data/creditcard.csv')
 
     # modify here to test different Classify Model
-    _model = ELMClassifier(layers=1, units=2048, epochs=1)
+    _model = RBFELMClassifier(layers=1, units=128, epochs=1)
     # _model = LogisticRegression()
     # _model = gbm.LGBMClassifier(objective='binary')
     # _model = xgb.XGBClassifier(max_depth=6, n_estimators=300)
